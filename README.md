@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="DOCUMENTS/logo.PNG" width="200" alt="Sharexpress Logo">
+  <img src="https://drive.sharexpress.in/uploads/8ff113d9-2008-47ee-952c-f935e4f309a1/edbc5856-f60d-4b2e-b3db-d3c3a709d1f2_logo.png?response-content-disposition=inline&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=sharexpress_service%2F20260427%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260427T133051Z&X-Amz-Expires=600&X-Amz-SignedHeaders=host&X-Amz-Signature=82f5a5d623e83668c77c05423a0a5789a65a42e4c23e7e670b6c8f8b9fcd87a6" width="200" alt="Sharexpress Logo">
 </p>
 
 

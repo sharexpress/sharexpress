@@ -86,7 +86,7 @@ const Signin = () => {
     if (user) {
       navigate("/dashboard");
     }
-  }, [user]);
+  }, [user, navigate]);
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!email) return;
