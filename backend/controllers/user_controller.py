@@ -27,10 +27,10 @@ from models.user_profiles import updateUser
 from models.user_model import email
 from typing import Optional
 import logging
-from core.config import FRONTEND_URI, PORJECT_ENVIRONMET
+from core.config import FRONTEND_URI, PROJECT_ENVIRONMENT
 
 
-is_prod = PORJECT_ENVIRONMET == "PRODUCTION"
+is_prod = PROJECT_ENVIRONMENT == "PRODUCTION"
 
 logger = logger = logging.getLogger(__name__)
 

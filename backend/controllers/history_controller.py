@@ -8,6 +8,50 @@ import zipfile
 import io
 from core.s3_config import s3_internal
 from core.config import MINIO_BUCKET
+import queue
+import threading
+
+
+class QueueWriter:
+    def __init__(self, q: queue.Queue):
+        self.q = q
+        self.offset = 0
+
+    def write(self, data):
+        if data:
+            self.q.put(data)
+            self.offset += len(data)
+        return len(data)
+
+    def tell(self):
+        return self.offset
+
+    def flush(self):
+        pass
+
+
+def zip_worker(files, q):
+    try:
+        writer = QueueWriter(q)
+        with zipfile.ZipFile(writer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for file in files:
+                storage_key = file.get("storage_key")
+                if not storage_key:
+                    continue
+                try:
+                    obj = s3_internal.get_object(Bucket=MINIO_BUCKET, Key=storage_key)
+                    with zip_file.open(file["filename"], "w") as z_out:
+                        while True:
+                            chunk = obj["Body"].read(65536)
+                            if not chunk:
+                                break
+                            z_out.write(chunk)
+                except Exception as e:
+                    print(f"Error zipping file {file.get('filename')}: {e}")
+    except Exception as e:
+        print("Error in zip worker thread:", e)
+    finally:
+        q.put(None)
 
 
 class HistoryController:
@@ -172,20 +216,15 @@ class HistoryController:
 
     @staticmethod
     async def download_transfer_zip(transfer_id: str, user: dict):
-        print("\n\n🚀 DOWNLOAD STARTED")
+        print("\n\n🚀 DOWNLOAD STARTED (STREAMING)")
         print("TRANSFER ID:", transfer_id)
         print("USER:", user.get("user_id"))
 
         db = get_db()
-
         history = await db.transfer_history.find_one({"transfer_id": transfer_id})
-
-        print("\n📦 HISTORY FETCHED:", history)
 
         if not history:
             raise HTTPException(status_code=404, detail="Transfer not found")
-
-        print("FILES COUNT:", len(history.get("files", [])))
 
         if (
             history["sender"]["user_id"] != user["user_id"]
@@ -194,85 +233,43 @@ class HistoryController:
             print("❌ UNAUTHORIZED ACCESS")
             raise HTTPException(status_code=403, detail="Unauthorized")
 
-        print("✅ AUTHORIZED")
-
         files = history.get("files", [])
-
         if not files:
-            print("❌ NO FILES FOUND")
             raise HTTPException(status_code=404, detail="No files in transfer")
 
-        zip_buffer = io.BytesIO()
+        # Resolve storage keys in the main async thread
+        resolved_files = []
+        for file in files:
+            file_doc = await db.files.find_one(
+                {"file_id": file["file_id"]},
+                {"storage_key": 1, "_id": 0},
+            )
+            if file_doc:
+                resolved_files.append({
+                    "file_id": file["file_id"],
+                    "filename": file["filename"],
+                    "storage_key": file_doc["storage_key"]
+                })
 
-        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-            for i, file in enumerate(files):
-                print(f"\n📄 FILE {i + 1}/{len(files)}")
-                print("FILE ID:", file["file_id"])
-                print("FILENAME:", file["filename"])
+        q = queue.Queue(maxsize=10) # buffer up to 10 chunks of 64KB
 
-                # ─────────────────────────────
-                # STEP 4: FETCH STORAGE KEY
-                # ─────────────────────────────
-                file_doc = await db.files.find_one(
-                    {"file_id": file["file_id"]},
-                    {"storage_key": 1, "_id": 0},
-                )
+        # Start zipping in background thread
+        thread = threading.Thread(target=zip_worker, args=(resolved_files, q))
+        thread.start()
 
-                if not file_doc:
-                    print("❌ FILE DOC NOT FOUND")
-                    continue
+        # Async generator to yield chunks from the queue
+        import asyncio
+        async def stream_generator():
+            while True:
+                chunk = await asyncio.to_thread(q.get)
+                if chunk is None:
+                    break
+                yield chunk
 
-                storage_key = file_doc["storage_key"]
-                print("🗂 STORAGE KEY:", storage_key)
-
-                # ─────────────────────────────
-                # STEP 5: FETCH FROM MINIO
-                # ─────────────────────────────
-                try:
-                    obj = s3_internal.get_object(
-                        Bucket=MINIO_BUCKET,
-                        Key=storage_key,
-                    )
-
-                    data = obj["Body"].read()
-
-                    print("📥 DOWNLOADED FROM MINIO:", len(data), "bytes")
-
-                    if not data:
-                        print("⚠️ EMPTY FILE DATA")
-
-                    # ─────────────────────────────
-                    # STEP 6: ADD TO ZIP
-                    # ─────────────────────────────
-                    zip_file.writestr(file["filename"], data)
-                    print("✅ ADDED TO ZIP")
-
-                except Exception as e:
-                    print("❌ MINIO FETCH FAILED:", e)
-                    continue
-
-        # ─────────────────────────────
-        # STEP 7: FINAL ZIP CHECK
-        # ─────────────────────────────
-        zip_buffer.seek(0)
-        zip_bytes = zip_buffer.getvalue()
-
-        print("\n🧪 ZIP DEBUG")
-        print("ZIP SIZE:", len(zip_bytes))
-
-        if len(zip_bytes) < 100:
-            print("⚠️ ZIP TOO SMALL → likely corrupted")
-
-        print("🚀 SENDING RESPONSE\n\n")
-
-        # ─────────────────────────────
-        # STEP 8: RESPONSE
-        # ─────────────────────────────
         return StreamingResponse(
-            iter([zip_bytes]),
+            stream_generator(),
             media_type="application/zip",
             headers={
                 "Content-Disposition": f'attachment; filename="sharexpress_{transfer_id[:8]}.zip"',
-                "Content-Length": str(len(zip_bytes)),
             },
         )

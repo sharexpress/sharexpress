@@ -19,10 +19,10 @@ from utils.user_repo import get_user_by_id
 from core.config import JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRES
 from core.database import get_db
 from models.sharing_session_creation_model import Status
-from core.config import PORJECT_ENVIRONMET
+from core.config import PROJECT_ENVIRONMENT
 
 
-is_prod = PORJECT_ENVIRONMET == "PRODUCTION"
+is_prod = PROJECT_ENVIRONMENT == "PRODUCTION"
 
 db = get_db()
 

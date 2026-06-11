@@ -34,8 +34,7 @@ from routers.file_routes import router as file_router
 from routers.history_routes import router as history_router
 from routers.edit_routes import router as edit_router
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-#  ENV FILE FUNCTION LOADS
-
+from core.config import PROJECT_ENVIRONMENT
 
 load_dotenv()
 
@@ -43,13 +42,8 @@ load_dotenv()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     ensure_bucket()
+    await create_indexes()
     yield
-
-
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     await create_indexes()
-#     yield
 
 
 #  APP CONFIGURED
@@ -58,7 +52,7 @@ app = FastAPI(
     title="QR Authentication API",
     description="API for user authentication and QR code management",
     version="1.0.0",
-    # lifespan=lifespan,
+    lifespan=lifespan,
 )
 
 
@@ -67,11 +61,13 @@ app.add_middleware(
     allowed_hosts=["api.sharexpress.in", "*.sharexpress.in", "*"],
 )
 
+is_prod = PROJECT_ENVIRONMENT == "PRODUCTION"
+
 app.add_middleware(
     SessionMiddleware,
     secret_key=os.getenv("SESSION_SECRET", "DEV_SECRET_CHANGE_IN_PRODUCTION"),
-    same_site="lax",
-    https_only=False,
+    same_site="none" if is_prod else "lax",
+    https_only=is_prod,
 )
 
 app.add_middleware(
@@ -91,14 +87,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
-)
-
-
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=os.getenv("SESSION_SECRET", "DEV_SECRET_CHANGE_IN_PRODUCTION"),
-    same_site="none",
-    https_only=True,
 )
 
 

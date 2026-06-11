@@ -22,7 +22,7 @@ import History from "../components/Dashboard/History";
 import Profile from "../components/Dashboard/Profile";
 import QR from "../components/Dashboard/QR";
 import Session from "../components/Dashboard/Session";
-import DocxEditor from "../services/Documents/DocxEditor";
+
 
 const Dashboard = () => {
   const { user } = useSelector((state) => state.auth);

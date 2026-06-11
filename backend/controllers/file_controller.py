@@ -329,26 +329,21 @@ class QuotaManager:
 
     def __init__(self, db):
         self.db = db
-        self._cache = {}
         self._cache_ttl = 300
-        self._cache_timestamps = {}
 
     async def check_quota(self, user_id: str, session_id: str, size: int) -> bool:
         """Check if user has enough quota"""
         DAILY_QUOTA = 1024 * 1024 * 1024
+        from lib.redis import Redis_client
 
-        cache_key = f"{user_id}:{session_id}"
-        if cache_key in self._cache:
-            if time.time() - self._cache_timestamps[cache_key] < self._cache_ttl:
-                current_usage = self._cache[cache_key]
-            else:
-                current_usage = await self._get_usage_from_db(user_id, session_id)
-                self._cache[cache_key] = current_usage
-                self._cache_timestamps[cache_key] = time.time()
+        cache_key = f"quota:{user_id}:{session_id}"
+        cached_val = await asyncio.to_thread(Redis_client.get, cache_key)
+
+        if cached_val is not None:
+            current_usage = int(cached_val)
         else:
             current_usage = await self._get_usage_from_db(user_id, session_id)
-            self._cache[cache_key] = current_usage
-            self._cache_timestamps[cache_key] = time.time()
+            await asyncio.to_thread(Redis_client.setex, cache_key, self._cache_ttl, str(current_usage))
 
         if current_usage + size > DAILY_QUOTA:
             raise QuotaExceededError(
@@ -382,9 +377,11 @@ class QuotaManager:
 
     async def increment_usage(self, user_id: str, session_id: str, size: int):
         """Increment cached usage"""
-        cache_key = f"{user_id}:{session_id}"
-        if cache_key in self._cache:
-            self._cache[cache_key] += size
+        from lib.redis import Redis_client
+        cache_key = f"quota:{user_id}:{session_id}"
+        exists = await asyncio.to_thread(Redis_client.exists, cache_key)
+        if exists:
+            await asyncio.to_thread(Redis_client.incrby, cache_key, size)
 
 
 """FILE CONTROLLER STARTS FROM HERE """
@@ -1025,14 +1022,13 @@ class File_User:
             if not files:
                 return {"success": True, "message": "No files to delete"}
 
-            for f in files:
+            storage_keys = [f["storage_key"] for f in files if f.get("storage_key")]
+            if storage_keys:
                 try:
-                    if f.get("storage_key"):
-                        from core.s3_config import delete_from_storage
-
-                        delete_from_storage(f["storage_key"])
+                    from core.s3_config import delete_many_from_storage
+                    await asyncio.to_thread(delete_many_from_storage, storage_keys)
                 except Exception as e:
-                    print("Storage delete failed:", e)
+                    print("Bulk storage delete failed:", e)
 
             result = await db.files.delete_many({"sender_ID": user_id})
 

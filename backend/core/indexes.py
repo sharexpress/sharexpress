@@ -17,8 +17,7 @@ db = get_db()
 
 
 async def create_indexes():
-    # share_sessions indexes
-
+    # sharing_session indexes
     await db.sharing_session.create_index(
         [
             ("qr_token", 1),
@@ -29,11 +28,18 @@ async def create_indexes():
         name="unique_share_relationship",
     )
 
-    await db.share_sessions.create_index("session_id", unique=True)
-    await db.share_sessions.create_index("sender_id")
-    await db.share_sessions.create_index("receiver_id")
-    await db.share_sessions.create_index("expires_at")
-    await db.share_sessions.create_index("status")
+    await db.sharing_session.create_index("sharing_session_ID", unique=True)
+    await db.sharing_session.create_index("sharing_token", unique=True)
+    await db.sharing_session.create_index("sender_ID")
+    await db.sharing_session.create_index("receiver_ID")
+    await db.sharing_session.create_index("status")
 
     # qr_codes indexes
     await db.qr_codes.create_index("qr_token", unique=True)
+    await db.qr_codes.create_index("owner_id")
+
+    # files indexes
+    await db.files.create_index("file_id", unique=True)
+    await db.files.create_index("sharing_session_id")
+    await db.files.create_index("sender_ID")
+    await db.files.create_index("is_deleted")

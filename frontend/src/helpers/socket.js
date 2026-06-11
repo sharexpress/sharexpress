@@ -1,9 +1,11 @@
 import { socketEvent } from "../store/slices/ShareSessionSlice";
+import { API } from "../api/api";
 
 let socket = null;
 
 export const connectSocket = (qr_id, dispatch) => {
-  socket = new WebSocket(`ws://localhost:8000/share/ws/${qr_id}`);
+  const wsBase = API.replace(/^http/, "ws");
+  socket = new WebSocket(`${wsBase}/share/ws/${qr_id}`);
 
   socket.onopen = () => {
     console.log("✅ WS CONNECTED");

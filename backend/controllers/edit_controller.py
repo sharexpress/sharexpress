@@ -61,6 +61,8 @@ async def _get_file(file_id: str, user: dict):
     return file_doc
 
 
+import asyncio
+
 class EditorController:
     @staticmethod
     async def load_file(file_id: str, user: dict):
@@ -75,7 +77,8 @@ class EditorController:
                 status_code=400, detail=f"Unsupported file type: .{ext}"
             )
 
-        url = s3_public.generate_presigned_url(
+        url = await asyncio.to_thread(
+            s3_public.generate_presigned_url,
             "get_object",
             Params={
                 "Bucket": MINIO_BUCKET,
@@ -94,13 +97,16 @@ class EditorController:
         }
 
     @staticmethod
-    async def get_docx_content(file_id: str, storage_key: str, user: dict):
+    async def get_docx_content(file_id: str, user: dict):
         """Fetch DOCX from MinIO → parse → return paragraphs as JSON."""
-        await _get_file(file_id, user)  # auth check
+        file_doc = await _get_file(file_id, user)  # auth check
+        storage_key = file_doc["storage_key"]
 
         try:
-            obj = s3_internal.get_object(Bucket=MINIO_BUCKET, Key=storage_key)
-            data = obj["Body"].read()
+            obj = await asyncio.to_thread(
+                s3_internal.get_object, Bucket=MINIO_BUCKET, Key=storage_key
+            )
+            data = await asyncio.to_thread(obj["Body"].read)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Storage fetch failed: {e}")
 
@@ -132,9 +138,10 @@ class EditorController:
         return {"file_id": file_id, "paragraphs": paragraphs}
 
     @staticmethod
-    async def save_docx(file_id: str, storage_key: str, content: list, user: dict):
+    async def save_docx(file_id: str, content: list, user: dict):
         """Rebuild DOCX from edited paragraphs → overwrite in MinIO."""
-        await _get_file(file_id, user)  # auth check
+        file_doc = await _get_file(file_id, user)  # auth check
+        storage_key = file_doc["storage_key"]
 
         if not content:
             raise HTTPException(status_code=400, detail="No content provided")
@@ -159,7 +166,8 @@ class EditorController:
             raise HTTPException(status_code=500, detail=f"Failed to build DOCX: {e}")
 
         try:
-            s3_internal.put_object(
+            await asyncio.to_thread(
+                s3_internal.put_object,
                 Bucket=MINIO_BUCKET,
                 Key=storage_key,
                 Body=buf.getvalue(),
@@ -169,3 +177,4 @@ class EditorController:
             raise HTTPException(status_code=500, detail=f"Storage save failed: {e}")
 
         return {"success": True, "file_id": file_id}
+
