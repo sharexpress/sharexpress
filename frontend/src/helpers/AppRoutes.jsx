@@ -19,7 +19,6 @@ import SecurityPolicyPage from "../pages/SecurityPolicyPage";
 import Signin from "../pages/Signin";
 import Dashboard from "../pages/Dashboard";
 import NotFound from "../components/NotFound";
-import DocxEditor from "../services/Documents/DocxEditor";
 
 const AppRoutes = () => {
   return (

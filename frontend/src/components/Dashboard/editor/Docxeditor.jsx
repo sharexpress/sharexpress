@@ -1020,14 +1020,14 @@ const DocxEditor = ({ file, onClose }) => {
   useEffect(() => {
     const load = async () => {
       try {
-        const metaRes = await fetch(`${API}editor/load/${file.file_id}`, {
+        const metaRes = await fetch(`${API}/editor/load/${file.file_id}`, {
           credentials: "include",
         });
         if (!metaRes.ok) throw new Error("Failed to load file");
         const meta = await metaRes.json();
         setStorageKey(meta.storage_key);
         const contentRes = await fetch(
-          `${API}editor/docx/${file.file_id}/content?storage_key=${encodeURIComponent(meta.storage_key)}`,
+          `${API}/editor/docx/${file.file_id}/content`,
           { credentials: "include" },
         );
         if (!contentRes.ok) throw new Error("Failed to parse document");
@@ -1199,11 +1199,11 @@ const DocxEditor = ({ file, onClose }) => {
     try {
       setSaving(true);
       setSaveError(null);
-      const res = await fetch(`${API}editor/docx/${file.file_id}/save`, {
+      const res = await fetch(`${API}/editor/docx/${file.file_id}/save`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ storage_key: storageKey, content: paragraphs }),
+        body: JSON.stringify({ content: paragraphs }),
       });
       if (!res.ok) throw new Error("Save failed");
       setSaved(true);

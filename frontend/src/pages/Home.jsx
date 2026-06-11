@@ -21,7 +21,6 @@ import StartHero from "../components/StartHero";
 import Images_Float from "../components/Images_Float";
 import QuestionCard from "../components/QuestionCard";
 import Questions from "../components/Questions";
-import DocxEditor from "../services/Documents/DocxEditor";
 
 const Home = () => {
   return (

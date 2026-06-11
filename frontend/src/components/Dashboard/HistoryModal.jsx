@@ -46,7 +46,7 @@ const HistoryModal = ({ transferId, onClose }) => {
     try {
       setDownloading(true);
       const res = await fetch(
-        `${API}history/${transfer_history.transfer_id}/download`,
+        `${API}/history/${transfer_history.transfer_id}/download`,
         {
           method: "GET",
           credentials: "include",
@@ -170,7 +170,7 @@ const HistoryModal = ({ transferId, onClose }) => {
                     <button
                       onClick={async () => {
                         const res = await fetch(
-                          `${API}files/download/${file.file_id}`,
+                          `${API}/files/download/${file.file_id}`,
                           {
                             credentials: "include",
                           },

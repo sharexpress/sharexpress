@@ -94,7 +94,7 @@ const Signin = () => {
   };
 
   const handleGoogleSign = () => {
-    window.location.href = `${API}auth/google/login`;
+    window.location.href = `${API}/auth/google/login`;
   };
 
   const handleSendOTP = async () => {

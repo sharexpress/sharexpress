@@ -46,7 +46,7 @@ const DashboardFiles = () => {
     if (url) {
       window.open(url, "_blank");
     } else {
-      window.open(`${API}files/download/${file.file_id}`, "_blank");
+      window.open(`${API}/files/download/${file.file_id}`, "_blank");
     }
   };
 

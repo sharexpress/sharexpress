@@ -28,7 +28,7 @@ export const getFileType = (filename = "") => {
 };
 
 const doFetch = (fileId, abortSignal, onSuccess, onError, onDone) => {
-  fetch(`${API}files/download/${fileId}`, {
+  fetch(`${API}/files/download/${fileId}`, {
     credentials: "include",
     signal: abortSignal,
   })
