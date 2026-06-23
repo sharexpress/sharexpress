@@ -27,7 +27,7 @@ from models.user_profiles import updateUser
 from models.user_model import email
 from typing import Optional
 import logging
-from core.config import FRONTEND_URI, PROJECT_ENVIRONMENT
+from core.config import FRONTEND_URI, PROJECT_ENVIRONMENT, GOOGLE_REDIRECT_URI
 
 
 is_prod = PROJECT_ENVIRONMENT == "PRODUCTION"
@@ -175,7 +175,7 @@ class UserController:
     async def redirect_to_uri(request: Request):
         """Redirect user to Google OAuth consent screen"""
         try:
-            redirect_uri = "https://api.sharexpress.in/auth/google/callback"
+            redirect_uri = GOOGLE_REDIRECT_URI
             return await oauth.google.authorize_redirect(
                 request,
                 redirect_uri,
