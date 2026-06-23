@@ -15,7 +15,9 @@ from fastapi import Request, Response
 from datetime import datetime, timedelta
 from uuid import uuid4
 from utils.random_name_for_guest import get_random_names
+from core.config import PROJECT_ENVIRONMENT
 
+is_prod = PROJECT_ENVIRONMENT == "PRODUCTION"
 db = get_db()
 
 
@@ -80,9 +82,11 @@ async def get_or_create_guest_session(request: Request, response: Response):
             key="guest_session",
             value=session_id,
             httponly=True,
-            secure=False,
-            samesite="lax",
+            secure=is_prod,
+            samesite="none" if is_prod else "lax",
+            domain=".sharexpress.in" if is_prod else None,
             max_age=24 * 60 * 60,
+            path="/",
         )
 
         return session_data
@@ -95,9 +99,11 @@ async def get_or_create_guest_session(request: Request, response: Response):
             key="guest_session",
             value=session_id,
             httponly=True,
-            secure=False,
-            samesite="lax",
+            secure=is_prod,
+            samesite="none" if is_prod else "lax",
+            domain=".sharexpress.in" if is_prod else None,
             max_age=24 * 60 * 60,
+            path="/",
         )
 
         return {

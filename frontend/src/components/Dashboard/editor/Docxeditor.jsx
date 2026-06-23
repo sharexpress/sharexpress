@@ -41,7 +41,7 @@ import {
   Outdent,
 } from "lucide-react";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API = (import.meta.env.VITE_API_URL || "http://localhost:8000").replace(/\/$/, "");
 
 const FONT_SIZES = [
   8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 72,

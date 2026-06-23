@@ -11,35 +11,126 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND.
 #
 
+import logging
 from core.database import get_db
 
 db = get_db()
+logger = logging.getLogger(__name__)
+
+
+async def cleanup_duplicate_sessions():
+    """Finds and deletes duplicate sharing_session documents keeping only the latest one."""
+    try:
+        pipeline = [
+            {
+                "$group": {
+                    "_id": {
+                        "qr_token": "$qr_token",
+                        "sender_ID": "$sender_ID",
+                        "receiver_ID": "$receiver_ID"
+                    },
+                    "count": {"$sum": 1},
+                    "docs": {"$push": {"_id": "$_id", "created_at": "$created_at"}}
+                }
+            },
+            {"$match": {"count": {"$gt": 1}}}
+        ]
+        
+        cursor = db.sharing_session.aggregate(pipeline)
+        async for group in cursor:
+            docs = group["docs"]
+            docs.sort(key=lambda d: d.get("created_at") or d["_id"])
+            ids_to_delete = [d["_id"] for d in docs[:-1]]
+            await db.sharing_session.delete_many({"_id": {"$in": ids_to_delete}})
+            logger.info(f"Deleted {len(ids_to_delete)} duplicate sharing_session documents for group {group['_id']}")
+    except Exception as e:
+        logger.error(f"Failed to cleanup duplicate sharing_sessions: {e}")
+
+
+async def cleanup_duplicate_qr_codes():
+    """Finds and deletes duplicate qr_codes documents keeping only the latest one."""
+    try:
+        pipeline = [
+            {
+                "$group": {
+                    "_id": "$qr_token",
+                    "count": {"$sum": 1},
+                    "docs": {"$push": {"_id": "$_id", "created_at": "$created_at"}}
+                }
+            },
+            {"$match": {"count": {"$gt": 1}}}
+        ]
+        
+        cursor = db.qr_codes.aggregate(pipeline)
+        async for group in cursor:
+            docs = group["docs"]
+            docs.sort(key=lambda d: d.get("created_at") or d["_id"])
+            ids_to_delete = [d["_id"] for d in docs[:-1]]
+            await db.qr_codes.delete_many({"_id": {"$in": ids_to_delete}})
+            logger.info(f"Deleted {len(ids_to_delete)} duplicate qr_codes documents for qr_token {group['_id']}")
+    except Exception as e:
+        logger.error(f"Failed to cleanup duplicate qr_codes: {e}")
+
+
+async def cleanup_duplicate_files():
+    """Finds and deletes duplicate files documents keeping only the latest one."""
+    try:
+        pipeline = [
+            {
+                "$group": {
+                    "_id": "$file_id",
+                    "count": {"$sum": 1},
+                    "docs": {"$push": {"_id": "$_id", "created_at": "$created_at"}}
+                }
+            },
+            {"$match": {"count": {"$gt": 1}}}
+        ]
+        
+        cursor = db.files.aggregate(pipeline)
+        async for group in cursor:
+            docs = group["docs"]
+            docs.sort(key=lambda d: d.get("created_at") or d["_id"])
+            ids_to_delete = [d["_id"] for d in docs[:-1]]
+            await db.files.delete_many({"_id": {"$in": ids_to_delete}})
+            logger.info(f"Deleted {len(ids_to_delete)} duplicate files documents for file_id {group['_id']}")
+    except Exception as e:
+        logger.error(f"Failed to cleanup duplicate files: {e}")
 
 
 async def create_indexes():
-    # sharing_session indexes
-    await db.sharing_session.create_index(
-        [
-            ("qr_token", 1),
-            ("sender_ID", 1),
-            ("receiver_ID", 1),
-        ],
-        unique=True,
-        name="unique_share_relationship",
-    )
+    # 1. Cleanup any historical duplicate documents before building unique indexes
+    await cleanup_duplicate_sessions()
+    await cleanup_duplicate_qr_codes()
+    await cleanup_duplicate_files()
 
-    await db.sharing_session.create_index("sharing_session_ID", unique=True)
-    await db.sharing_session.create_index("sharing_token", unique=True)
-    await db.sharing_session.create_index("sender_ID")
-    await db.sharing_session.create_index("receiver_ID")
-    await db.sharing_session.create_index("status")
+    # 2. List of indexes to create: (collection, keys, options)
+    indexes = [
+        # sharing_session
+        (
+            db.sharing_session,
+            [("qr_token", 1), ("sender_ID", 1), ("receiver_ID", 1)],
+            {"unique": True, "name": "unique_share_relationship"},
+        ),
+        (db.sharing_session, "sharing_session_ID", {"unique": True}),
+        (db.sharing_session, "sharing_token", {"unique": True}),
+        (db.sharing_session, "sender_ID", {}),
+        (db.sharing_session, "receiver_ID", {}),
+        (db.sharing_session, "status", {}),
+        # qr_codes
+        (db.qr_codes, "qr_token", {"unique": True}),
+        (db.qr_codes, "owner_id", {}),
+        # files
+        (db.files, "file_id", {"unique": True}),
+        (db.files, "sharing_session_id", {}),
+        (db.files, "sender_ID", {}),
+        (db.files, "is_deleted", {}),
+    ]
 
-    # qr_codes indexes
-    await db.qr_codes.create_index("qr_token", unique=True)
-    await db.qr_codes.create_index("owner_id")
+    for collection, keys, options in indexes:
+        try:
+            await collection.create_index(keys, **options)
+        except Exception as e:
+            logger.warning(
+                f"Failed to create index on '{collection.name}' for keys {keys} with options {options}: {e}"
+            )
 
-    # files indexes
-    await db.files.create_index("file_id", unique=True)
-    await db.files.create_index("sharing_session_id")
-    await db.files.create_index("sender_ID")
-    await db.files.create_index("is_deleted")
