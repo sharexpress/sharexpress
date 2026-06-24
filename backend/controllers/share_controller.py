@@ -19,7 +19,7 @@ from utils.mongo_format_ import serialize_mongo
 from enum import Enum
 import secrets
 from pymongo import ReturnDocument
-from datetime import datetime
+from datetime import datetime, timedelta
 from utils.JWT import set_sharing_cookie
 from typing import Dict
 from jose import jwt, JWTError
@@ -142,6 +142,7 @@ class SharingController:
                         "reciever_name": reciever_name,
                         "is_active": True,
                         "status": Status.ACTIVE,
+                        "expires_at": datetime.utcnow() + timedelta(minutes=15),
                         "updated_at": datetime.utcnow(),
                     }
                 },

@@ -900,6 +900,59 @@ class FileController:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
+    async def get_admin_analytics(self) -> Dict[str, Any]:
+        """Aggregate stats for administrator analytics dashboard"""
+        try:
+            # 1. Active sessions counts
+            active_sharing_sessions = await self.db.sharing_session.count_documents({"is_active": True})
+            active_guest_sessions = await self.db.guest_sessions.count_documents({"expires_at": {"$gt": datetime.utcnow()}})
+
+            # 2. File counts & storage usage
+            total_files = await self.db.files.count_documents({"is_deleted": False})
+            
+            # Aggregate storage size
+            pipeline = [
+                {"$match": {"is_deleted": False}},
+                {"$group": {"_id": None, "total_size": {"$sum": "$size"}}}
+            ]
+            cursor = self.db.files.aggregate(pipeline)
+            res = await cursor.to_list(length=1)
+            total_storage_bytes = res[0]["total_size"] if res else 0
+
+            # 3. Upload statuses (counts for pending, uploaded, failed)
+            uploaded_count = await self.db.files.count_documents({"upload_status": "uploaded", "is_deleted": False})
+            failed_count = await self.db.files.count_documents({"upload_status": "failed", "is_deleted": False})
+            pending_count = await self.db.files.count_documents({"upload_status": "pending", "is_deleted": False})
+
+            # Calculate error rate
+            total_attempts = uploaded_count + failed_count
+            error_rate = (failed_count / total_attempts * 100) if total_attempts > 0 else 0.0
+
+            # 4. System stats
+            return {
+                "success": True,
+                "timestamp": datetime.utcnow().isoformat(),
+                "active_sessions": {
+                    "sharing": active_sharing_sessions,
+                    "guest": active_guest_sessions,
+                    "total": active_sharing_sessions + active_guest_sessions
+                },
+                "storage": {
+                    "total_files": total_files,
+                    "total_bytes": total_storage_bytes,
+                    "total_mb": round(total_storage_bytes / 1024 / 1024, 2),
+                },
+                "uploads": {
+                    "uploaded": uploaded_count,
+                    "failed": failed_count,
+                    "pending": pending_count,
+                    "error_rate_percent": round(error_rate, 2)
+                }
+            }
+        except Exception as e:
+            logger.error(f"Error gathering admin analytics: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail=f"Failed to gather admin analytics: {str(e)}")
+
 
 """FILE CONTROLLER ENDS HERE """
 
@@ -917,6 +970,7 @@ class BackgroundCleaner:
         while self.running:
             try:
                 await self.cleanup_expired_files()
+                await self.cleanup_expired_sessions_and_qrs()
                 await asyncio.sleep(3600)
             except Exception as e:
                 logger.error(f"Background cleanup error: {e}", exc_info=True)
@@ -948,6 +1002,15 @@ class BackgroundCleaner:
         )
 
         logger.info(f"Cleanup completed for {len(expired_files)} files")
+
+    async def cleanup_expired_sessions_and_qrs(self):
+        try:
+            from utils.user_repo import cleanup_expired_sessions, cleanup_expired_qr_codes
+            deleted_sessions = await cleanup_expired_sessions()
+            deactivated_qrs = await cleanup_expired_qr_codes()
+            logger.info(f"Cleaned up {deleted_sessions} expired sessions and deactivated {deactivated_qrs} expired QR codes")
+        except Exception as e:
+            logger.error(f"Failed to cleanup expired sessions or QR codes: {e}")
 
     def stop(self):
         """Stop background cleanup task"""

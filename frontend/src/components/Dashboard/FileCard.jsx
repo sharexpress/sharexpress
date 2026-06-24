@@ -7,7 +7,7 @@ import EditorRouter from "../Dashboard/editor/Editorrouter";
 
 import { Pencil } from "lucide-react";
 
-const EDITABLE_TYPES = ["pdf", "doc", "docx"];
+const EDITABLE_TYPES = ["pdf", "doc", "docx", "txt", "md", "html", "json", "csv"];
 
 const formatSize = (size) => {
   if (!size) return "0 B";

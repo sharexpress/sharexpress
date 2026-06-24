@@ -378,6 +378,19 @@ async def trigger_cleanup():
         )
 
 
+@router.get("/admin-analytics")
+async def get_admin_analytics(user: dict = Depends(check_auth_middleware)):
+    """Expose administrative analytics for system health monitoring (LOG-06)"""
+    email_str = user.get("email", "")
+    if email_str not in ["noreply@sharexpress.in", "admin@sharexpress.in"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Admin credentials required",
+        )
+    controller = FileController()
+    return await controller.get_admin_analytics()
+
+
 @router.get("/user/files")
 async def get_files(user: dict = Depends(check_auth_middleware)):
     return await File_User.get_files_uploaded_by_users(user)

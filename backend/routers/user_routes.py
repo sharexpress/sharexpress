@@ -74,3 +74,9 @@ async def auth_success():
 @router.post("/search")
 async def seach(email: email):
     return await UserController.search_by_email(email)
+
+
+@router.delete("/activity-log")
+async def delete_activity_log(user=Depends(check_auth_middleware)):
+    from controllers.history_controller import HistoryController
+    return await HistoryController.delete_activity_log(user)

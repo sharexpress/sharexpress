@@ -12,7 +12,7 @@
 #
 from pydantic import BaseModel, Field
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 from uuid import uuid4
 from models.File_setup import Role
@@ -52,7 +52,8 @@ class SharingSession(BaseModel):
     status: Status = Status.PENDING
     is_active: bool = False
 
-    # Audit
+    # Expiration & Audit
+    expires_at: datetime = Field(default_factory=lambda: datetime.utcnow() + timedelta(minutes=15))
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = None
     claimed_at: Optional[datetime] = None

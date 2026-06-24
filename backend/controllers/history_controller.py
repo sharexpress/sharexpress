@@ -273,3 +273,33 @@ class HistoryController:
                 "Content-Disposition": f'attachment; filename="sharexpress_{transfer_id[:8]}.zip"',
             },
         )
+
+    @staticmethod
+    async def delete_activity_log(user: dict):
+        try:
+            from core.database import get_db
+            db = get_db()
+            user_id = user.get("user_id")
+            if not user_id:
+                raise HTTPException(status_code=401, detail="Unauthorized")
+
+            # Delete from transfer_history
+            result = await db.transfer_history.delete_many(
+                {
+                    "$or": [
+                        {"sender.user_id": user_id},
+                        {"receiver.user_id": user_id},
+                    ]
+                }
+            )
+
+            # Also delete from activity_log if any exist
+            await db.activity_log.delete_many({"actor_id": user_id})
+
+            return {
+                "success": True,
+                "message": f"Successfully deleted {result.deleted_count} history records.",
+            }
+        except Exception as e:
+            print("DELETE HISTORY ERROR:", e)
+            raise HTTPException(status_code=500, detail="FAILED TO DELETE HISTORY")

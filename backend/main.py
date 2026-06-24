@@ -39,11 +39,29 @@ from core.config import PROJECT_ENVIRONMENT
 load_dotenv()
 
 
+import asyncio
+from controllers.file_controller import FileController, BackgroundCleaner
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     ensure_bucket()
     await create_indexes()
+    
+    # Instantiate and start the BackgroundCleaner
+    controller = FileController()
+    cleaner = BackgroundCleaner(controller)
+    cleaner_task = asyncio.create_task(cleaner.start())
+    
     yield
+    
+    # Gracefully stop cleaner task on shutdown
+    cleaner.stop()
+    try:
+        await asyncio.wait_for(cleaner_task, timeout=5.0)
+    except asyncio.TimeoutError:
+        cleaner_task.cancel()
+    except Exception:
+        pass
 
 
 #  APP CONFIGURED

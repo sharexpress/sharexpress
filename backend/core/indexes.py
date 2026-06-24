@@ -124,6 +124,12 @@ async def create_indexes():
         (db.files, "sharing_session_id", {}),
         (db.files, "sender_ID", {}),
         (db.files, "is_deleted", {}),
+        # TTL Indexes
+        (db.guest_sessions, "expires_at", {"expireAfterSeconds": 0}),
+        (db.qr_access_log, "timestamp", {"expireAfterSeconds": 90 * 24 * 60 * 60}),
+        (db.activity_log, "timestamp", {"expireAfterSeconds": 90 * 24 * 60 * 60}),
+        (db.files, "expires_at", {"expireAfterSeconds": 0}),
+        (db.sharing_session, "expires_at", {"expireAfterSeconds": 0}),
     ]
 
     for collection, keys, options in indexes:

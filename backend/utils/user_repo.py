@@ -49,7 +49,7 @@ async def get_or_create_guest_session(request: Request, response: Response):
             session = await db.guest_sessions.find_one({"session_id": session_id})
 
             if session and session["expires_at"] > datetime.utcnow():
-                new_expiry = datetime.utcnow() + timedelta(hours=24)
+                new_expiry = datetime.utcnow() + timedelta(minutes=10)
 
                 await db.guest_sessions.update_one(
                     {"session_id": session_id},
@@ -62,11 +62,23 @@ async def get_or_create_guest_session(request: Request, response: Response):
                 )
 
                 session["expires_at"] = new_expiry
+                
+                # Extend the cookie age as well (sliding window)
+                response.set_cookie(
+                    key="guest_session",
+                    value=session_id,
+                    httponly=True,
+                    secure=is_prod,
+                    samesite="none" if is_prod else "lax",
+                    domain=".sharexpress.in" if is_prod else None,
+                    max_age=600,
+                    path="/",
+                )
                 return session
 
         session_id = str(uuid4())
         guest_name = get_random_names()
-        expires_at = datetime.utcnow() + timedelta(hours=24)
+        expires_at = datetime.utcnow() + timedelta(minutes=10)
 
         session_data = {
             "session_id": session_id,
@@ -85,7 +97,7 @@ async def get_or_create_guest_session(request: Request, response: Response):
             secure=is_prod,
             samesite="none" if is_prod else "lax",
             domain=".sharexpress.in" if is_prod else None,
-            max_age=24 * 60 * 60,
+            max_age=600,
             path="/",
         )
 
@@ -102,7 +114,7 @@ async def get_or_create_guest_session(request: Request, response: Response):
             secure=is_prod,
             samesite="none" if is_prod else "lax",
             domain=".sharexpress.in" if is_prod else None,
-            max_age=24 * 60 * 60,
+            max_age=600,
             path="/",
         )
 
@@ -110,7 +122,7 @@ async def get_or_create_guest_session(request: Request, response: Response):
             "session_id": session_id,
             "guest_name": guest_name,
             "created_at": datetime.utcnow(),
-            "expires_at": datetime.utcnow() + timedelta(hours=24),
+            "expires_at": datetime.utcnow() + timedelta(minutes=10),
         }
 
 
