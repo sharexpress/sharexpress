@@ -142,15 +142,49 @@ async def health_check():
     }
 
 
-@app.get("/", tags=["Root"])
-async def root():
-    """Root endpoint with API information"""
-    return {
-        "message": "QR Authentication API",
-        "version": "1.0.0",
-        "docs": "/docs",
-        "health": "/health",
-    }
+# --- Hybrid SSR / SPA Page Router ---
+from fastapi.responses import HTMLResponse
+from fastapi import HTTPException
+
+DIST_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
+INDEX_PATH = os.path.join(DIST_DIR, "index.html")
+
+async def render_ssr_html():
+    if not os.path.exists(INDEX_PATH):
+        fallback_html = """<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>sharexpress files — Secure Cloud Storage & QR-Based Session Sharing</title>
+</head>
+<body style="background: black; color: white;">
+    <h1>sharexpress files</h1>
+    <p>Loading application...</p>
+</body>
+</html>"""
+        return HTMLResponse(content=fallback_html, status_code=200)
+
+    try:
+        with open(INDEX_PATH, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content, status_code=200)
+    except Exception as e:
+        print(f"Error serving SSR index: {str(e)}")
+        if os.path.exists(INDEX_PATH):
+            with open(INDEX_PATH, "r", encoding="utf-8") as f:
+                return HTMLResponse(content=f.read(), status_code=200)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.get("/", response_class=HTMLResponse, tags=["Root"])
+async def serve_ssr_index():
+    return await render_ssr_html()
+
+@app.get("/{path:path}", response_class=HTMLResponse, tags=["Root"])
+async def serve_ssr_fallback(path: str):
+    excluded_prefixes = ["api", "docs", "redoc", "openapi.json", "auth", "QR", "share", "files", "editor"]
+    if any(path.startswith(prefix) for prefix in excluded_prefixes):
+        raise HTTPException(status_code=404, detail="Not Found")
+    return await render_ssr_html()
 
 
 if __name__ == "__main__":

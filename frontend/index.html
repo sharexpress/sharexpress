@@ -1,5 +1,5 @@
 <!--
-Copyright 2026 Sharexpress
+Copyright 2026 sharexpress
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -8,7 +8,8 @@ You may obtain a copy of the License at
     http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS.
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND.
 -->
 <!doctype html>
 <html lang="en">
@@ -17,27 +18,178 @@ distributed under the License is distributed on an "AS IS" BASIS.
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
-    <title>sharexpress files — Secure Cloud & P2P Storage</title>
-    <meta name="description" content="A high-performance peer-to-peer and cloud-based object storage and transfer platform. Transfer files securely with end-to-end encryption." />
-    <meta name="keywords" content="files sharing, secure storage, sharexpress, peer to peer transfer, end to end encryption, cloud drive" />
+    <title>sharexpress files — Secure Cloud Storage & QR-Based Session Sharing</title>
+    <meta name="description" content="sharexpress files is a high-performance, session-scoped cloud storage and file sharing engine. Transfer files securely with QR-based pairing, direct-to-S3 presigned URLs, and live in-browser document editing." />
+    <meta name="keywords" content="file sharing, secure cloud storage, sharexpress, QR code pairing, session sharing, P2P file transfer, document editor, file versioning, secure upload, temporary drive" />
     <link rel="canonical" href="https://files.sharexpress.in" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://files.sharexpress.in" />
-    <meta property="og:title" content="sharexpress files — Secure Cloud & P2P Storage" />
-    <meta property="og:description" content="A high-performance peer-to-peer and cloud-based object storage and transfer platform. Transfer files securely with end-to-end encryption." />
+    <meta property="og:title" content="sharexpress files — Secure Cloud Storage & Session Sharing" />
+    <meta property="og:description" content="High-performance, session-scoped file sharing engine. Features QR-based device pairing, direct-to-S3 presigned uploads, and live document versioning." />
     <meta property="og:image" content="https://files.sharexpress.in/logo.png" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://files.sharexpress.in" />
-    <meta name="twitter:title" content="sharexpress files — Secure Cloud & P2P Storage" />
-    <meta name="twitter:description" content="A high-performance peer-to-peer and cloud-based object storage and transfer platform. Transfer files securely with end-to-end encryption." />
+    <meta name="twitter:title" content="sharexpress files — Secure Cloud Storage & Session Sharing" />
+    <meta name="twitter:description" content="High-performance, session-scoped file sharing engine. Features QR-based device pairing, direct-to-S3 presigned uploads, and live document versioning." />
     <meta name="twitter:image" content="https://files.sharexpress.in/logo.png" />
+
+    <!-- Structured Data: JSON-LD Schemas for Search Engines -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "sharexpress files",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "All",
+        "url": "https://files.sharexpress.in",
+        "description": "High-performance, session-scoped file sharing engine with QR code device pairing, direct-to-S3 presigned uploads, and live document versioning.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0.00",
+          "priceCurrency": "USD"
+        },
+        "featureList": [
+          "QR-Based Secure Session Pairing",
+          "Direct-to-S3 Presigned Uploads",
+          "In-Browser Document Editing & Versioning (TXT, MD, HTML, JSON, CSV)",
+          "Granular Permission Control (can_upload, can_download, can_edit)",
+          "Temporary Guest Sandboxes with 10-Minute Expiry",
+          "Automated Garbage Collection & TTL cleanup"
+        ],
+        "author": {
+          "@type": "Organization",
+          "name": "sharexpress",
+          "url": "https://sharexpress.in"
+        }
+      }
+    </script>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "sharexpress files",
+        "url": "https://files.sharexpress.in",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://files.sharexpress.in/?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Pre-rendered Static Semantic Fallback (SSG) for Crawlers.
+         This is replaced by React's rendering engine on the client side once loaded. -->
+    <div id="root">
+      <header style="background: #0d0d0d; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-weight: bold; color: white;">sharexpress files</div>
+        <nav>
+          <a href="https://sharexpress.in" style="color: #8a8a8a; margin-right: 20px; text-decoration: none;">Corporate Hub</a>
+          <a href="#features" style="color: #8a8a8a; margin-right: 20px; text-decoration: none;">Features</a>
+          <a href="#security" style="color: #8a8a8a; margin-right: 20px; text-decoration: none;">Security Specs</a>
+          <a href="#signin" style="color: white; border: 1px solid #38bdf8; padding: 6px 15px; border-radius: 4px; text-decoration: none;">Get Started</a>
+        </nav>
+      </header>
+
+      <main style="max-width: 1000px; margin: 0 auto; padding: 40px 20px; font-family: sans-serif; color: #e5e7eb; background: #080808;">
+        
+        <!-- Hero Section -->
+        <section id="hero" style="text-align: center; margin-bottom: 60px;">
+          <h1 style="font-size: 2.8rem; color: white; margin-bottom: 20px; font-weight: 800;">
+            Secure, Instant File Sharing & Collaboration Engine
+          </h1>
+          <p style="font-size: 1.2rem; color: #a3a3a3; max-width: 700px; margin: 0 auto 30px auto; line-height: 1.6;">
+            A cloud-backed, session-bound sharing portal. Securely pair devices via opaque QR codes, stream files directly to S3 storage, and edit code or plain text files in real-time with full version histories.
+          </p>
+          <a href="#signin" style="background: #38bdf8; color: black; font-weight: bold; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-size: 1.1rem;">
+            Initialize Transfer Session
+          </a>
+        </section>
+
+        <hr style="border: 0; border-top: 1px solid #1f2937; margin: 40px 0;" />
+
+        <!-- Core Features -->
+        <section id="features" style="margin-bottom: 60px;">
+          <h2 style="font-size: 2rem; color: white; text-align: center; margin-bottom: 40px; font-weight: 700;">
+            Core Capabilities Built for Rigor & Speed
+          </h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;">
+            
+            <article style="background: #171717; padding: 25px; border-radius: 8px; border: 1px solid #262626;">
+              <h3 style="color: #38bdf8; font-size: 1.3rem; margin-top: 0; margin-bottom: 15px;">QR-Based Device Pairing</h3>
+              <p style="color: #a3a3a3; font-size: 0.95rem; line-height: 1.5; margin: 0;">
+                Opaque, server-side tokens generate discoverable QR keys. Scan to pair instantly with zero public exposure of email or user IDs, keeping sessions strictly scoped.
+              </p>
+            </article>
+
+            <article style="background: #171717; padding: 25px; border-radius: 8px; border: 1px solid #262626;">
+              <h3 style="color: #38bdf8; font-size: 1.3rem; margin-top: 0; margin-bottom: 15px;">Direct-to-S3 Presigned Uploads</h3>
+              <p style="color: #a3a3a3; font-size: 0.95rem; line-height: 1.5; margin: 0;">
+                Files stream directly to cloud object storage. Generates secure presigned URLs to completely bypass backend memory limitations and optimize file transfer speeds.
+              </p>
+            </article>
+
+            <article style="background: #171717; padding: 25px; border-radius: 8px; border: 1px solid #262626;">
+              <h3 style="color: #38bdf8; font-size: 1.3rem; margin-top: 0; margin-bottom: 15px;">In-Browser Code Editing</h3>
+              <p style="color: #a3a3a3; font-size: 0.95rem; line-height: 1.5; margin: 0;">
+                Collaborate in real-time on code and text formats including `.txt`, `.md`, `.html`, `.json`, and `.csv`. Features a premium editor with word wrapping, global find & replace, and file stats.
+              </p>
+            </article>
+
+            <article style="background: #171717; padding: 25px; border-radius: 8px; border: 1px solid #262626;">
+              <h3 style="color: #38bdf8; font-size: 1.3rem; margin-top: 0; margin-bottom: 15px;">File Versioning History</h3>
+              <p style="color: #a3a3a3; font-size: 0.95rem; line-height: 1.5; margin: 0;">
+                Every document save compiles a new version in S3 and logs it. Maintain a history of up to 10 versions with a single-click restore option to roll back changes.
+              </p>
+            </article>
+
+            <article style="background: #171717; padding: 25px; border-radius: 8px; border: 1px solid #262626;">
+              <h3 style="color: #38bdf8; font-size: 1.3rem; margin-top: 0; margin-bottom: 15px;">Granular Permission Control</h3>
+              <p style="color: #a3a3a3; font-size: 0.95rem; line-height: 1.5; margin: 0;">
+                Manage transfer policies dynamically. Revoke or enable upload, download, and edit capabilities in real-time without invalidating existing files.
+              </p>
+            </article>
+
+            <article style="background: #171717; padding: 25px; border-radius: 8px; border: 1px solid #262626;">
+              <h3 style="color: #38bdf8; font-size: 1.3rem; margin-top: 0; margin-bottom: 15px;">Automated Garbage Collection</h3>
+              <p style="color: #a3a3a3; font-size: 0.95rem; line-height: 1.5; margin: 0;">
+                Built-in background workers and database TTL monitors automatically purge guest sessions in 10 minutes and delete guest files within 24 hours of upload.
+              </p>
+            </article>
+
+          </div>
+        </section>
+
+        <hr style="border: 0; border-top: 1px solid #1f2937; margin: 40px 0;" />
+
+        <!-- Security Specs -->
+        <section id="security" style="margin-bottom: 60px;">
+          <h2 style="font-size: 2rem; color: white; text-align: center; margin-bottom: 20px; font-weight: 700;">
+            Security Architecture Checklist
+          </h2>
+          <p style="text-align: center; color: #a3a3a3; margin-bottom: 40px;">
+            A system architected from the ground up for strict confidentiality and data isolation.
+          </p>
+          <ul style="list-style-type: none; padding: 0; max-width: 600px; margin: 0 auto; line-height: 2;">
+            <li style="border-bottom: 1px solid #1f2937; padding: 10px 0;">🛡️ <strong>RS256 Signature verification:</strong> All user logins use asymmetrical RSA 2048-bit keys.</li>
+            <li style="border-bottom: 1px solid #1f2937; padding: 10px 0;">🍪 <strong>HTTP-Only Strict Cookies:</strong> Session tokens are locked to HTTP-only SameSite=Strict cookies to block XSS vector theft.</li>
+            <li style="border-bottom: 1px solid #1f2937; padding: 10px 0;">🗝️ <strong>Opaque QR Tokens:</strong> QR codes encode only short-lived random bytes, containing no database IDs or user information.</li>
+            <li style="border-bottom: 1px solid #1f2937; padding: 10px 0;">👤 <strong>Temporary Guest Tier:</strong> Guest users run in ephemeral sandboxes with automated 10-minute session TTLs.</li>
+            <li style="border-bottom: 1px solid #1f2937; padding: 10px 0;">🔍 <strong>Binary Magic-Byte Inspection:</strong> Uploaded file types are strictly inspected using python-magic binary analysis.</li>
+          </ul>
+        </section>
+        
+      </main>
+
+      <footer style="background: #090909; border-t: 1px solid #171717; text-align: center; padding: 30px; color: #555; font-size: 0.85rem;">
+        <p>&copy; 2026 sharexpress. All cloud storage channels operational. files.sharexpress.in is a registered corporate node of sharexpress technologies.</p>
+      </footer>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
