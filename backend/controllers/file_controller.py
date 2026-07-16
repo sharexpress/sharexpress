@@ -821,18 +821,20 @@ class FileController:
     @async_retry(max_attempts=3, delay=0.5, exceptions=(ClientError, BotoCoreError))
     async def generate_download_url(self, user, file_id: str) -> Dict[str, Any]:
         """Generate secure presigned download URL"""
+        return await self.generate_download_url_v2(user, None, file_id)
 
-        user_id = user["user_id"] if user else None
+    @async_retry(max_attempts=3, delay=0.5, exceptions=(ClientError, BotoCoreError))
+    async def generate_download_url_v2(self, user, session, file_id: str) -> Dict[str, Any]:
+        """Generate secure presigned download URL for both user and session flows"""
+        query = {"file_id": file_id, "is_deleted": False}
+        if user:
+            query["sender_ID"] = user["user_id"]
+        elif session:
+            query["sharing_session_id"] = session["sharing_session_ID"]
+        else:
+            raise HTTPException(status_code=401, detail="Unauthorized")
 
-        # 2️⃣ Fetch file metadata from DB
-        file_doc = await self.db.files.find_one(
-            {
-                "file_id": file_id,
-                "sender_ID": user_id,
-                "is_deleted": False,
-            }
-        )
-
+        file_doc = await self.db.files.find_one(query)
         if not file_doc:
             raise HTTPException(status_code=404, detail="File not found")
 

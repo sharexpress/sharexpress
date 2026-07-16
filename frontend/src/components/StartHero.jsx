@@ -49,9 +49,9 @@ const StartHero = () => {
   ];
   return (
     <>
-      <div className="w-full h-screen  flex flex-col justify-center gap-0   ">
+      <div className="w-full min-h-screen py-16 flex flex-col justify-center gap-0">
         <div className="flex justify-center">
-          <div className="max-w-md  ">
+          <div className="max-w-md">
             <h1 className="text-white text-center text-[48px] font-[500] leading-[1.1] ">
               Choose how you want to share{" "}
             </h1>
@@ -60,7 +60,7 @@ const StartHero = () => {
             </h3>
           </div>
         </div>
-        <div className="flex justify-between gap-10 mt-20">
+        <div className="flex flex-col md:flex-row justify-between gap-10 mt-20">
           {accessModes.map((mode) => (
             <StartHeroCard key={mode.id} data={mode} />
           ))}

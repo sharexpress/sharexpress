@@ -265,7 +265,7 @@ class UserController:
             GenerateToken(user_id, response)
 
             redirect = RedirectResponse(
-                url=f"{FRONTEND_URI}/",
+                url=f"{FRONTEND_URI}/dashboard",
                 status_code=302,
             )
 

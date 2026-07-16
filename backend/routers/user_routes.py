@@ -15,6 +15,7 @@ from models.user_model import User, OTPverify, email
 from controllers.user_controller import UserController
 from utils.JWT import check_auth_middleware, check_token
 from models.user_profiles import updateUser
+from datetime import datetime
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -58,8 +59,32 @@ async def logout(response: Response, request: Request):
 
 
 @router.get("/me")
-async def get_current_user(user=Depends(check_auth_middleware)):
-    return await UserController.fetch_user(user)
+async def get_current_user(request: Request, response: Response):
+    from utils.JWT import get_current_user_optional
+    user = await get_current_user_optional(request)
+    if user:
+        return await UserController.fetch_user(user)
+    
+    from utils.user_repo import get_or_create_guest_session
+    try:
+        session = await get_or_create_guest_session(request, response)
+        if session:
+            safe_user = {
+                "user_id": session.get("session_id"),
+                "user_name": session.get("guest_name"),
+                "email": "guest@sharexpress.in",
+                "picture": None,
+                "auth_provider": "GUEST",
+                "is_verified": False,
+                "is_active": True,
+                "is_guest": True,
+                "created_at": session.get("created_at").isoformat() if isinstance(session.get("created_at"), datetime) else session.get("created_at"),
+            }
+            return {"success": True, "user": safe_user}
+    except Exception as e:
+        print(f"Error resolving guest in /me: {e}")
+        
+    return {"success": False, "user": None}
 
 
 @router.get("/success")

@@ -54,6 +54,7 @@ async def check_session(session: dict = Depends(verify_x_sharing_token)):
             "mode": session["status"],
             "sender_name": session["sender_name"],
             "reciever_name": session["reciever_name"],
+            "session_id": session["sharing_session_ID"],
         }
 
     return {"success": False, "message": "TOKEN EXPIRED OR NOT FOUND"}

@@ -13,17 +13,28 @@
 import React from "react";
 import WButton from "./WButton";
 import { FaCheck } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const StartHeroCard = ({ data }) => {
+  const navigate = useNavigate();
+
+  const handleAction = () => {
+    if (data.id === 1) {
+      navigate("/dashboard");
+    } else {
+      navigate("/signin");
+    }
+  };
+
   return (
-    <div className="w-2/3 bg-[#0a0a0a] border border-white/10 rounded-2xl p-8 transition-all duration-300 ">
+    <div className="w-full md:w-1/2 bg-[#0a0a0a] border border-white/10 rounded-2xl p-8 transition-all duration-300 ">
       <div className="text-white text-md "> {data.badge} </div>
 
       <h2 className="text-white text-2xl font-medium mt-6"> {data.title} </h2>
 
       <p className="text-[#B8B8B8] mt-2">{data.subtitle}</p>
       <div className="my-5">
-        <WButton text={data.buttonText} typeB={true} />
+        <WButton text={data.buttonText} onClick={handleAction} typeB={true} />
       </div>
 
       <div className="h-px bg-white/10 my-3  " />

@@ -482,6 +482,16 @@ class EditorController:
                 Body=buf.getvalue(),
                 ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             )
+            # Update size in files metadata
+            await db.files.update_one(
+                {"file_id": file_id},
+                {
+                    "$set": {
+                        "size": len(buf.getvalue()),
+                        "updated_at": datetime.utcnow(),
+                    }
+                },
+            )
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Storage save failed: {e}"

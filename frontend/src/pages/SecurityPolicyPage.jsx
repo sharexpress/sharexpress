@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from "react";
+import React, { useEffect } from "react";
 
 /**
  * Security Policy Page Component
@@ -25,6 +25,10 @@ import React from "react";
  * @returns {JSX.Element} Security policy page
  */
 const SecurityPolicyPage = () => {
+  useEffect(() => {
+    document.title = "Security Policy — ShareXpress";
+  }, []);
+
   const LAST_UPDATED = "March 3, 2026";
   const EFFECTIVE_DATE = "January 1, 2026";
   const SECURITY_EMAIL = "security@sharexpress.in";

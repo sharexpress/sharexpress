@@ -10,7 +10,7 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND.
 //
-import React from "react";
+import React, { useEffect } from "react";
 import Navbar from "../components/Navbar";
 import Hero from "../components/Hero";
 import Hero2 from "../components/Hero2";
@@ -23,16 +23,20 @@ import QuestionCard from "../components/QuestionCard";
 import Questions from "../components/Questions";
 
 const Home = () => {
+  useEffect(() => {
+    document.title = "ShareXpress — Secure & Scalable File Transfers";
+  }, []);
+
   return (
     <>
-      <div className=" h-fit min-w-screen bg-black  px-40 py-5  ">
+      <div className=" h-fit min-w-screen bg-black  px-4 md:px-16 lg:px-40 py-5  ">
         <Hero />
       </div>
       <div className=" h-2/3 min-w-screen bg-black  mb-20  ">
         <Images_Float />
       </div>
 
-      <div className=" min-h-screen min-w-screen bg-black  px-40 py-5  ">
+      <div className=" min-h-screen min-w-screen bg-black  px-4 md:px-16 lg:px-40 py-5  ">
         <Hero2 />
         <HeroCard />
         <Hero3 />

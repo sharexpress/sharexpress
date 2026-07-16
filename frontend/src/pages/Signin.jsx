@@ -83,6 +83,7 @@ const Signin = () => {
   const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
+    document.title = "Sign In — ShareXpress";
     if (user) {
       navigate("/dashboard");
     }

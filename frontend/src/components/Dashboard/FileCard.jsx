@@ -1,4 +1,20 @@
-import React, { useState, memo } from "react";
+/*
+ * Copyright 2026 Sharexpress Contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import React, { useState, useEffect, memo } from "react";
 import { Download, Trash2, MoreVertical } from "lucide-react";
 import useInViewUrl, { getFileType } from "../../helpers/Useinviewurl";
 import PreviewThumbnail from "./Previewthumbnail";
@@ -22,6 +38,48 @@ const FileCard = memo(({ file, onDownload, onDelete, view }) => {
   const type = getFileType(file?.filename);
   const { ref, url, loading, error, retry } = useInViewUrl(file);
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Intercept back button for Preview Modal
+  useEffect(() => {
+    if (!modalOpen) return;
+
+    const stateId = { modal: "preview-" + Date.now() };
+    window.history.pushState(stateId, "");
+
+    const handlePopState = () => {
+      setModalOpen(false);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      if (window.history.state?.modal?.startsWith("preview-")) {
+        window.history.back();
+      }
+    };
+  }, [modalOpen]);
+
+  // Intercept back button for Editor Modal
+  useEffect(() => {
+    if (!editOpen) return;
+
+    const stateId = { modal: "edit-" + Date.now() };
+    window.history.pushState(stateId, "");
+
+    const handlePopState = () => {
+      setEditOpen(false);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      if (window.history.state?.modal?.startsWith("edit-")) {
+        window.history.back();
+      }
+    };
+  }, [editOpen]);
 
   const handleCardClick = () => {
     if (url) setModalOpen(true);

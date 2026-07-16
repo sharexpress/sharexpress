@@ -134,15 +134,51 @@ async def complete_upload(
     response_model=DownloadResponse,
     status_code=status.HTTP_200_OK,
 )
-async def download_file(file_id: str, user: dict = Depends(check_auth_middleware)):
-    """Generate presigned download URL"""
+async def download_file(
+    request: Request,
+    file_id: str,
+):
+    """Generate presigned download URL for authenticated user or active sharing session participant"""
     try:
         controller = FileController()
 
-        logger.info(f"Download request: file_id={file_id}, ")
+        # Try standard auth first
+        from utils.JWT import get_current_user_optional
+        user = await get_current_user_optional(request)
 
-        result = await controller.generate_download_url(
-            user,
+        session = None
+        if not user:
+            # Try sharing session verification
+            token = request.cookies.get("x-sharing-token")
+            if token:
+                try:
+                    from jose import jwt
+                    from core.config import PUBLIC_KEY, JWT_ALGORITHM
+                    payload = jwt.decode(
+                        token,
+                        PUBLIC_KEY,
+                        algorithms=[JWT_ALGORITHM],
+                    )
+                    sharing_token = payload.get("sub")
+                    session = await controller.db.sharing_session.find_one({
+                        "sharing_token": sharing_token,
+                        "is_active": True,
+                        "status": "active"
+                    })
+                except Exception:
+                    pass
+
+        if not user and not session:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated or authorized to access this file"
+            )
+
+        logger.info(f"Download request: file_id={file_id}, user={user.get('user_id') if user else None}, session={session.get('sharing_session_ID') if session else None}")
+
+        result = await controller.generate_download_url_v2(
+            user=user,
+            session=session,
             file_id=file_id,
         )
 
@@ -425,5 +461,26 @@ async def share_files(
     # ✅ STEP 2: Create history
     if session and files:
         await HistoryController.create_History(session=session, files=files)
+        
+        # ✅ STEP 3: Notify receiver via WebSocket
+        try:
+            from core.database import get_db
+            from core.ws_manager import ws_manager
+            db = get_db()
+            qr = await db.qr_codes.find_one(
+                {"qr_token": qr_token},
+                {"qr_id": 1, "_id": 0},
+            )
+            if qr:
+                await ws_manager.send_to_room(
+                    qr["qr_id"],
+                    {
+                        "type": "FILES_SHARED",
+                        "session_id": session.get("sharing_session_ID"),
+                        "files": [f.get("filename") for f in files] if files else [],
+                    }
+                )
+        except Exception as e:
+            logger.error(f"Failed to send FILES_SHARED notification: {e}")
 
     return result

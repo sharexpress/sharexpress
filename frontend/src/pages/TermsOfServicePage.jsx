@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from "react";
+import React, { useEffect } from "react";
 
 /**
  * Terms of Service Page Component
@@ -25,6 +25,10 @@ import React from "react";
  * @returns {JSX.Element} Terms of service page
  */
 const TermsOfServicePage = () => {
+  useEffect(() => {
+    document.title = "Terms of Service — ShareXpress";
+  }, []);
+
   const LAST_UPDATED = "March 3, 2026";
   const EFFECTIVE_DATE = "January 1, 2026";
   const CONTACT_EMAIL = "support@sharexpress.in";

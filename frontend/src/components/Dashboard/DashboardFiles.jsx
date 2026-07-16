@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Sharexpress Contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 // DashboardFiles.jsx
 // Parent is clean — no URL fetching logic here.
 // Each FileCard handles its own lazy fetch via useInViewUrl.
@@ -39,7 +55,7 @@ const DashboardFiles = () => {
     dispatch(fetchUserFiles());
   }, [dispatch]);
 
-  const handleDownload = (file) => {
+  const handleDownload = React.useCallback((file) => {
     const url = file?.download_url;
 
     console.log("FILE URL:", url);
@@ -48,14 +64,14 @@ const DashboardFiles = () => {
     } else {
       window.open(`${API}/files/download/${file.file_id}`, "_blank");
     }
-  };
+  }, []);
 
-  const handleDelete = (fileId) => {
+  const handleDelete = React.useCallback((fileId) => {
     removeCachedUrl(fileId);
     // dispatch your single delete action here
-  };
+  }, []);
 
-  const handleDeleteAll = async () => {
+  const handleDeleteAll = React.useCallback(async () => {
     try {
       setDeletingAll(true);
       await dispatch(deleteAllFiles()).unwrap();
@@ -67,7 +83,7 @@ const DashboardFiles = () => {
     } finally {
       setDeletingAll(false);
     }
-  };
+  }, [dispatch]);
 
   const processedFiles = React.useMemo(() => {
     let files = [...userFiles];
@@ -109,7 +125,7 @@ const DashboardFiles = () => {
   }, [userFiles, sortBy, debouncedSearch]);
 
   return (
-    <div className="ml-[260px] flex-1 p-3">
+    <div className="ml-0 md:ml-[260px] flex-1 p-3 pt-20 md:pt-3">
       <div className="min-w-full min-h-full bg-[#0d0d0d] rounded-xl border border-[#ffffff10] p-6 flex flex-col">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-white text-lg font-medium">Your Files</h1>

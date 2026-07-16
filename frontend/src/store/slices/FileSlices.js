@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Sharexpress Contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { api } from "../../api/api";
 
@@ -62,6 +78,18 @@ export const deleteAllFiles = createAsyncThunk(
   },
 );
 
+export const fetchSessionFiles = createAsyncThunk(
+  "files/fetchSessionFiles",
+  async (session_id, { rejectWithValue }) => {
+    try {
+      const res = await api.get(`/files/session/${session_id}/list`);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Session files fetch failed");
+    }
+  },
+);
+
 const FileSlice = createSlice({
   name: "files",
 
@@ -71,6 +99,8 @@ const FileSlice = createSlice({
     files: [],
     userFiles: [],
     loadingFiles: false,
+    sessionFiles: [],
+    loadingSessionFiles: false,
     progressMap: {},
     statusMap: {},
   },
@@ -165,6 +195,19 @@ const FileSlice = createSlice({
 
       .addCase(deleteAllFiles.fulfilled, (state) => {
         state.userFiles = [];
+      });
+
+    builder
+      .addCase(fetchSessionFiles.pending, (state) => {
+        state.loadingSessionFiles = true;
+      })
+      .addCase(fetchSessionFiles.fulfilled, (state, action) => {
+        state.loadingSessionFiles = false;
+        state.sessionFiles = action.payload?.files || [];
+      })
+      .addCase(fetchSessionFiles.rejected, (state, action) => {
+        state.loadingSessionFiles = false;
+        state.error = action.payload;
       });
   },
 });

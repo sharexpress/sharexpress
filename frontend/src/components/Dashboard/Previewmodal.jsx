@@ -1,12 +1,27 @@
-// PreviewModal.jsx
-// Full document preview in modal overlay.
-// This is the ONLY place iframes are ever rendered.
-// Closes on Escape or backdrop click. Locks body scroll while open.
+/*
+ * Copyright 2026 Sharexpress Contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { X, Download, ExternalLink } from "lucide-react";
 
 const PreviewModal = ({ file, url, type, onClose, onDownload }) => {
+  const [blobUrl, setBlobUrl] = useState(null);
+  const [loadingBlob, setLoadingBlob] = useState(false);
+  const blobRef = useRef(null);
+
   useEffect(() => {
     const handleKey = (e) => {
       if (e.key === "Escape") onClose();
@@ -18,6 +33,36 @@ const PreviewModal = ({ file, url, type, onClose, onDownload }) => {
       document.body.style.overflow = "";
     };
   }, [onClose]);
+
+  useEffect(() => {
+    if (type === "pdf" && url) {
+      let active = true;
+      setLoadingBlob(true);
+      fetch(url)
+        .then((res) => res.blob())
+        .then((blob) => {
+          if (active) {
+            const localUrl = URL.createObjectURL(blob);
+            blobRef.current = localUrl;
+            setBlobUrl(localUrl);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to fetch PDF preview blob:", err);
+        })
+        .finally(() => {
+          if (active) setLoadingBlob(false);
+        });
+
+      return () => {
+        active = false;
+        if (blobRef.current) {
+          URL.revokeObjectURL(blobRef.current);
+          blobRef.current = null;
+        }
+      };
+    }
+  }, [url, type]);
 
   const renderContent = () => {
     if (!url) {
@@ -43,10 +88,18 @@ const PreviewModal = ({ file, url, type, onClose, onDownload }) => {
       );
     }
     if (type === "pdf") {
+      if (loadingBlob) {
+        return (
+          <div className="flex flex-col items-center justify-center h-full gap-3 text-[#6a6a6a]">
+            <div className="w-6 h-6 rounded-full border border-[#444] border-t-[#888] animate-spin" />
+            <span className="text-xs">Loading PDF preview...</span>
+          </div>
+        );
+      }
       return (
         <iframe
-          src={url}
-          className="w-full h-full rounded"
+          src={blobUrl || url}
+          className="w-full h-full rounded bg-white"
           title={file.filename}
         />
       );
